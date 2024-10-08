@@ -1,14 +1,16 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.google.gms.google-services")
+    id("kotlin-kapt")
 }
 
 android {
-    namespace = "com.dar_hav_projects.messanger"
+    namespace = "com.dar_hav_projects.messenger"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.dar_hav_projects.messanger"
+        applicationId = "com.dar_hav_projects.messenger"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -50,7 +52,25 @@ android {
 }
 
 dependencies {
+    implementation ("androidx.navigation:navigation-compose:2.7.1")
+    implementation("io.coil-kt:coil-compose:2.0.0")
+
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation(libs.firebase.firestore.ktx)
+
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.30.1")
+    implementation ("com.google.accompanist:accompanist-navigation-animation:0.36.0")
+    implementation(libs.firebase.storage.ktx)
+
+    val dagger_version = "2.52"
+    implementation("com.google.dagger:dagger:$dagger_version")
+    kapt("com.google.dagger:dagger-compiler:$dagger_version")
+
+
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
