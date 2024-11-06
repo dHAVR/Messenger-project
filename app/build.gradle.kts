@@ -64,6 +64,10 @@ dependencies {
     implementation ("com.google.accompanist:accompanist-navigation-animation:0.36.0")
     implementation(libs.firebase.storage.ktx)
 
+    implementation ("androidx.compose.material:material:1.4.2")
+    implementation("io.coil-kt:coil-compose:2.0.0")
+
+
     val dagger_version = "2.52"
     implementation("com.google.dagger:dagger:$dagger_version")
     kapt("com.google.dagger:dagger-compiler:$dagger_version")

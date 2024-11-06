@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.dar_hav_projects.messenger.di.AppComponent
+import com.dar_hav_projects.messenger.domens.models.Chat
+import com.dar_hav_projects.messenger.domens.models.Contact
 import com.dar_hav_projects.messenger.domens.models.IsSignedEnum
 import com.dar_hav_projects.messenger.domens.models.UserData
 import com.google.firebase.Firebase
@@ -17,6 +19,7 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -229,6 +232,57 @@ class FirebaseRepository@Inject constructor(
         }
     }
 
+    override suspend fun fetchChats(): Result<List<Chat>> = suspendCancellableCoroutine { res ->
+        val userUid = auth.currentUser?.uid.toString()
+        Log.d("MyLog", "User UID: $userUid")
+
+        val chats = mutableListOf<Chat>()
+        val firestoreCollection = firestore.collection(COLLECTION_CHATS)
+
+        firestoreCollection
+            .whereEqualTo(COLLECTION_CHATS_MEMBER1, userUid)
+            .get()
+            .addOnSuccessListener { result ->
+                chats.addAll(result.toObjects(Chat::class.java))
+                Log.d("MyLog", "Chats after member1UId query: $chats")
+
+                firestoreCollection
+                    .whereEqualTo(COLLECTION_CHATS_MEMBER2, userUid)
+                    .get()
+                    .addOnSuccessListener { result2 ->
+                        chats.addAll(result2.toObjects(Chat::class.java))
+                        Log.d("MyLog", "Final Chats: $chats")
+                        res.resume(Result.success(chats))
+                    }
+                    .addOnFailureListener { ex ->
+                        Log.d("MyLog", "Failure in member2UId query: ${ex.message}")
+                        res.resume(Result.failure(ex))
+                    }
+            }
+            .addOnFailureListener { ex ->
+                Log.d("MyLog", "Failure in member1UId query: ${ex.message}")
+                res.resume(Result.failure(ex))
+            }
+    }
+
+
+    override suspend fun fetchContacts(): Result<List<Contact>> = suspendCoroutine { res ->
+        val userUid = auth.currentUser?.uid.toString()
+
+        firestore.collection(COLLECTION_CONTACTS)
+            .whereEqualTo(COLLECTION_CONTACTS_CONTACT_WITH, userUid)
+            .get()
+            .addOnSuccessListener { result ->
+                val items = result.toObjects<Contact>()
+                res.resume(Result.success(items))
+                Log.d("MyLog", "contacts 1: ${items}")
+            }
+            .addOnFailureListener { ex ->
+                Log.d("MyLog", "contacts 1: failure $ex")
+                res.resume(Result.success(emptyList()))
+            }
+    }
+
     companion object{
 
         private const val COLLECTION_USERDATA = "UserData"
@@ -236,6 +290,12 @@ class FirebaseRepository@Inject constructor(
         private const val COLLECTION_USERDATA_NAME = "name"
         private const val COLLECTION_USERDATA_SURNAME = "surname"
         private const val COLLECTION_USERDATA_URL = "url"
+
+        private const val COLLECTION_CHATS = "Chats"
+        private const val COLLECTION_CHATS_MEMBER1 = "member1UId"
+        private const val COLLECTION_CHATS_MEMBER2 = "member2UId"
+        private const val COLLECTION_CONTACTS = "Contacts"
+        private const val COLLECTION_CONTACTS_CONTACT_WITH = "contactWith"
     }
 
 

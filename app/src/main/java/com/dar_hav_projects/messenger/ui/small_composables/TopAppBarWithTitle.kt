@@ -34,14 +34,6 @@ fun TopAppBarWithTitle(
                     color = MaterialTheme.colorScheme.onBackground
                 )
             )
-        },
-        navigationIcon = {
-            IconButton(onClick = onClick) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_left),
-                    contentDescription = null
-                )
-            }
         }
     )
 }

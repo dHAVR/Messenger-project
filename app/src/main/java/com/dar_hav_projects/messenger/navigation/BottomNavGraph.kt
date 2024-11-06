@@ -1,59 +1,52 @@
 package com.dar_hav_projects.messenger.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSavedStateRegistryOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.dar_hav_projects.messenger.ui.screens.MainScreen
-import com.dar_hav_projects.messenger.ui.screens.OnBoardingScreen
-import com.dar_hav_projects.messenger.ui.screens.Splash
-import com.dar_hav_projects.messenger.ui.screens.signInUp.SignInScreen
-import com.dar_hav_projects.messenger.ui.screens.signInUp.SignUpScreen
-import com.dar_hav_projects.messenger.ui.screens.signInUp.UserInfoScreen
-import com.dar_hav_projects.messenger.ui.screens.signInUp.VerifyEmailScreen
+import com.dar_hav_projects.messenger.ui.screens.home.ChatsScreen
+import com.dar_hav_projects.messenger.ui.screens.home.ContactsScreen
+import com.dar_hav_projects.messenger.ui.screens.home.SettingsScreen
 import com.dar_hav_projects.messenger.utils.Routes
+import com.dar_hav_projects.messenger.utils.appComponent
+import com.dar_hav_projects.messenger.view_models.ChatsViewModel
+import com.dar_hav_projects.messenger.view_models.ContactsViewModel
 
 @Composable
-fun NavigationGraph(navController: NavHostController, nextRoute: String, onNavigate:(String) -> Unit) {
+fun BottomNavGraph(
+    navController: NavHostController,
+    mainNavController: NavHostController,
+    onNavigate: (String) -> Unit
+) {
+    val chatViewModel: ChatsViewModel = viewModel(
+        key = "Chat",
+        factory = ChatsViewModel.provideFactory(
+            LocalContext.current.appComponent(),
+            owner = LocalSavedStateRegistryOwner.current
+        )
+    )
 
-    NavHost(navController = navController, startDestination = nextRoute ){
-        composable(Routes.SignIn.name) {
-            SignInScreen(){ route ->
-                onNavigate(route)
-            }
-        }
-        composable(Routes.SignUp.name){
-            SignUpScreen(){ route ->
-                onNavigate(route)
-            }
-        }
-        composable(Routes.Main.name){
-            MainScreen(){ route ->
-                onNavigate(route)
-            }
-        }
+    val contactsViewModel: ContactsViewModel = viewModel(
+        key = "Contact",
+        factory = ContactsViewModel.provideFactory(
+            LocalContext.current.appComponent(),
+            owner = LocalSavedStateRegistryOwner.current
+        )
+    )
 
-        composable(Routes.OnBoarding.name){
-            OnBoardingScreen(){ route ->
-                onNavigate(route)
-            }
+    NavHost(navController = navController, startDestination = Routes.Chats.name) {
+        composable(Routes.Chats.name) {
+            ChatsScreen(chatViewModel)
         }
-
-        composable(Routes.UserInfo.name){
-            UserInfoScreen(){ route ->
-                onNavigate(route)
-            }
+        composable(Routes.Settings.name) {
+            SettingsScreen()
         }
-
-        composable(Routes.VerifyEmail.name){
-            VerifyEmailScreen(){ route ->
-                onNavigate(route)
-            }
+        composable(Routes.Contacts.name) {
+            ContactsScreen(contactsViewModel)
         }
-
-        composable(Routes.Splash.name){
-            Splash()
-        }
-
     }
+
 }

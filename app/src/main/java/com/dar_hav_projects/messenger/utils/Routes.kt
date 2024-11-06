@@ -8,4 +8,8 @@ sealed class Routes(val name: String) {
     data object UserInfo : Routes("user_info")
     data object VerifyEmail : Routes("verify_email")
     data object Splash : Routes("splash")
+
+    data object Contacts : Routes("contacts")
+    data object Chats : Routes("chats")
+    data object Settings : Routes("settings")
 }
