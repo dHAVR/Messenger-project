@@ -170,6 +170,7 @@ class FirebaseRepository@Inject constructor(
                 .document(userId)
                 .set(
                     hashMapOf(
+                        COLLECTION_USERDATA_USER_UID to userId,
                         COLLECTION_USERDATA_NICKNAME to nickname,
                         COLLECTION_USERDATA_NAME to name,
                         COLLECTION_USERDATA_SURNAME to surname,
@@ -265,6 +266,28 @@ class FirebaseRepository@Inject constructor(
             }
     }
 
+    override suspend fun createChat(member2: String): Result<Boolean> = suspendCoroutine { res ->
+        val userId = auth.currentUser?.uid.toString()
+        val chatData = hashMapOf(
+            COLLECTION_CHATS_MEMBER1 to userId,
+            COLLECTION_CHATS_MEMBER2 to member2
+        )
+
+        firestore
+            .collection(COLLECTION_CHATS)
+            .add(chatData)
+            .addOnCompleteListener { result ->
+                if (result.isSuccessful) {
+                    res.resume(Result.success(true))
+                } else {
+                    res.resume(Result.failure(Throwable("Can't connect to server")))
+                }
+            }
+            .addOnFailureListener { ex ->
+                res.resume(Result.failure(ex))
+            }
+    }
+
 
     override suspend fun fetchContacts(): Result<List<Contact>> = suspendCoroutine { res ->
         val userUid = auth.currentUser?.uid.toString()
@@ -283,19 +306,77 @@ class FirebaseRepository@Inject constructor(
             }
     }
 
+    override suspend fun addContact(item: UserData): Result<Boolean> = suspendCoroutine { res ->
+        val userId = auth.currentUser?.uid.toString()
+        firestore
+            .collection(COLLECTION_CONTACTS)
+            .document()
+            .set(
+                hashMapOf(
+                    COLLECTION_CONTACTS_CONTACT_WITH to userId,
+                    COLLECTION_CONTACTS_NAME to item.name,
+                    COLLECTION_CONTACTS_SURNAME to item.surname,
+                    COLLECTION_CONTACTS_NICKNAME to item.nickname,
+                    COLLECTION_CONTACTS_PROFILE_PHOTO_URL to item.url,
+                    COLLECTION_CONTACTS_PROFILE_UID to item.userUID
+                ),
+                SetOptions.merge()
+            )
+            .addOnCompleteListener { result ->
+                if(result.isSuccessful){
+                    res.resume(Result.success(true))
+                } else {
+                    res.resume(Result.failure(Throwable("Can`t connect to server")))
+                }
+            }
+            .addOnFailureListener { ex ->
+                res.resume(Result.failure(ex))
+            }
+
+    }
+
+    override suspend fun searchContact(nickname: String): Result<List<UserData>> = suspendCoroutine { res ->
+        val userId = auth.currentUser?.uid.toString()
+        Log.d("MyLog", "userId 1: ${userId}")
+        firestore.collection(COLLECTION_USERDATA)
+            .whereEqualTo(COLLECTION_USERDATA_NICKNAME, nickname)
+            .get()
+            .addOnSuccessListener { result ->
+                val items = result.toObjects<UserData>().filter { it.userUID != userId }
+
+                res.resume(Result.success(items))
+                Log.d("MyLog", "contacts 1: ${items}")
+            }
+            .addOnFailureListener { ex ->
+                Log.d("MyLog", "contacts 1: failure $ex")
+                res.resume(Result.success(emptyList()))
+            }
+    }
+
+
     companion object{
 
         private const val COLLECTION_USERDATA = "UserData"
+        private const val COLLECTION_USERDATA_USER_UID = "userUID"
         private const val COLLECTION_USERDATA_NICKNAME = "nickname"
         private const val COLLECTION_USERDATA_NAME = "name"
         private const val COLLECTION_USERDATA_SURNAME = "surname"
         private const val COLLECTION_USERDATA_URL = "url"
 
         private const val COLLECTION_CHATS = "Chats"
+        private const val COLLECTION_CHATS_ID = "chatId"
+        private const val COLLECTION_CHATS_LAST_MESSAGE = "lastMessage"
+        private const val COLLECTION_CHATS_LAST_MESSAGE_TIMESTAMP = "lastMessageTimestamp"
         private const val COLLECTION_CHATS_MEMBER1 = "member1UId"
         private const val COLLECTION_CHATS_MEMBER2 = "member2UId"
+
         private const val COLLECTION_CONTACTS = "Contacts"
         private const val COLLECTION_CONTACTS_CONTACT_WITH = "contactWith"
+        private const val COLLECTION_CONTACTS_NAME = "name"
+        private const val COLLECTION_CONTACTS_SURNAME = "surname"
+        private const val COLLECTION_CONTACTS_NICKNAME = "nickname"
+        private const val COLLECTION_CONTACTS_PROFILE_PHOTO_URL = "profileImageUrl"
+        private const val COLLECTION_CONTACTS_PROFILE_UID = "userId"
     }
 
 

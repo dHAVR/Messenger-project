@@ -13,7 +13,7 @@ sealed class BottomNavItem(
     data class ChatsItem(val context: Context) : BottomNavItem(
        "Chats",
         R.drawable.ic_chats,
-        Routes.Chats.name
+        Routes.ChatsList.name
     )
 
     data class SettingsItem (val context: Context): BottomNavItem(
@@ -24,7 +24,7 @@ sealed class BottomNavItem(
     data class ContactsItem(val context: Context): BottomNavItem(
         "Contacts",
         R.drawable.ic_contacts,
-        Routes.Contacts.name
+        Routes.ContactsList.name
     )
 }
 

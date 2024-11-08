@@ -17,10 +17,14 @@ import androidx.lifecycle.Observer
 import com.dar_hav_projects.messenger.domens.models.Chat
 import com.dar_hav_projects.messenger.ui.small_composables.ChatCard
 import com.dar_hav_projects.messenger.ui.small_composables.TopAppBarWithTitle
+import com.dar_hav_projects.messenger.utils.Routes
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
 
 @Composable
-fun ChatsScreen(viewModel: ChatsViewModel) {
+fun ChatsListScreen(
+    viewModel: ChatsViewModel,
+    onNavigate: (String) -> Unit
+) {
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -47,7 +51,8 @@ fun ChatsScreen(viewModel: ChatsViewModel) {
                 .fillMaxSize()
         ) {
             itemsIndexed(chats) { _, item ->
-                ChatCard(item, viewModel){
+                ChatCard(item, viewModel){ id->
+                   onNavigate(Routes.Chat.name)
                 }
             }
         }

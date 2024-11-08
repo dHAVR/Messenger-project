@@ -1,7 +1,9 @@
 package com.dar_hav_projects.messenger.view_models
 
 import android.os.Bundle
+import android.provider.ContactsContract.CommonDataKinds.Nickname
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -13,6 +15,7 @@ import com.dar_hav_projects.messenger.di.AppComponent
 import com.dar_hav_projects.messenger.domens.actions.I_NetworkActions
 import com.dar_hav_projects.messenger.domens.models.Chat
 import com.dar_hav_projects.messenger.domens.models.Contact
+import com.dar_hav_projects.messenger.domens.models.UserData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,17 +31,42 @@ appComponent: AppComponent
     private var _contacts = MutableLiveData<List<Contact>>()
     val contacts: LiveData<List<Contact>> = _contacts
 
-    init {
-        appComponent.inject(this)
-        Log.d("MyLog", "INIT")
+    private var _searchContacts = MutableLiveData<List<UserData>>()
+    val searchContacts: LiveData<List<UserData>> = _searchContacts
+
+
+    var searchInput = mutableStateOf("")
+
+    fun searchContacts(nickname: String){
+        viewModelScope.launch(Dispatchers.Default) {
+            networkActions.searchContact(nickname)
+                .onSuccess {
+                    withContext(Dispatchers.Main) {
+                        _searchContacts.value = it
+                    }
+                }
+        }
+    }
+
+    suspend fun addContact(item: UserData): Result<Boolean> {
+       return networkActions.addContact(item)
+    }
+
+
+    fun fetchContacts() {
         viewModelScope.launch(Dispatchers.Default){
             networkActions.fetchContacts().onSuccess {
                 withContext(Dispatchers.Main) {
                     _contacts.value = it
-                    Log.d("MyLog", "contacts: ${_contacts.value}")
                 }
             }
         }
+    }
+
+
+
+    init {
+        appComponent.inject(this)
     }
 
 
