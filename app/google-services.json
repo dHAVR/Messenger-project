@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "808104953698",
+    "project_id": "messenger-project-a4e03",
+    "storage_bucket": "messenger-project-a4e03.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:808104953698:android:f00bcc52045e4990020e3b",
+        "android_client_info": {
+          "package_name": "com.dar_hav_projects.messenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_SzKlD8VShtlArzFH9KITLDIBXCFijM8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

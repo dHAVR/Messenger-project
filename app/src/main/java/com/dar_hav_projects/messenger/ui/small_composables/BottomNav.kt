@@ -63,7 +63,7 @@ fun BottomNav(
                     if (!isSelected) {
                         when(bottomNavItem) {
                             is BottomNavItem.ChatsItem -> {
-                                navController.navigate(Routes.Chats.name) {
+                                navController.navigate(Routes.ChatsList.name) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }
@@ -73,7 +73,7 @@ fun BottomNav(
                             }
 
                             is BottomNavItem.ContactsItem -> {
-                                navController.navigate(Routes.Contacts.name) {
+                                navController.navigate(Routes.ContactsList.name) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }

@@ -16,5 +16,10 @@ interface I_NetworkActions {
     suspend fun fetchUserData():  Result<UserData?>
 
     suspend fun fetchChats():  Result<List<Chat>>
+    suspend fun createChat(member2: String): Result<Boolean>
+
+
     suspend fun fetchContacts():  Result<List<Contact>>
+    suspend fun addContact(item: UserData): Result<Boolean>
+    suspend fun searchContact(nickname: String): Result<List<UserData>>
 }
