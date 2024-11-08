@@ -27,7 +27,8 @@ import com.dar_hav_projects.messenger.view_models.ContactsViewModel
 @Composable
 fun ContactCard(
     item: Contact,
-    onClick: (String) -> Unit
+    onClick: (String) -> Unit,
+    onDelete: (String) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -80,7 +81,6 @@ fun ContactCard(
                     )
                 }
             }
-
 
             IconButton(onClick = {
                 onClick(item.userId)

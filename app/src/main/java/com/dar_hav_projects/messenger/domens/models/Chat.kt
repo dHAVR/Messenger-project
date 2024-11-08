@@ -6,5 +6,5 @@ data class Chat(
     val member1UId: String = "",
     val member2UId: String = "",
     val lastMessage: String? = null,
-    val lastMessageTimestamp: Long? = null
+    val lastMessageTimestamp: Long? = 0L
 )

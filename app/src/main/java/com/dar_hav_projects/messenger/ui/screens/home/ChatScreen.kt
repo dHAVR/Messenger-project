@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +32,7 @@ import com.google.api.Property
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(viewModel: ChatsViewModel, chatID: String){
+
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -48,7 +50,9 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String){
                 .background(MaterialTheme.colorScheme.surface)
         ) {
             LazyColumn(
-                modifier = Modifier.weight(4f).padding(vertical = 8.dp),
+                modifier = Modifier
+                    .weight(4f)
+                    .padding(vertical = 8.dp),
             ) {
                 val messages = listOf(
                     Pair("Taya", "Hi!"),

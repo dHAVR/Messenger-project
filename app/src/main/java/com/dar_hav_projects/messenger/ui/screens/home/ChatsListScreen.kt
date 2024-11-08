@@ -51,9 +51,8 @@ fun ChatsListScreen(
                 .fillMaxSize()
         ) {
             itemsIndexed(chats) { _, item ->
-                ChatCard(item, viewModel){ id->
-                   onNavigate(Routes.Chat.name)
-                }
+                ChatCard(item, viewModel, onNavigate = onNavigate)
+
             }
         }
     }
