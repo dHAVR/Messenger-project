@@ -101,12 +101,13 @@ fun ContactsListScreen(
             ) {
                 if (contacts.isNotEmpty()) {
                     itemsIndexed(contacts) { _, item ->
-                        ContactCard(item) { member2 ->
+                        ContactCard(item, onDelete = { userUID ->
+
+                        }, onClick = { member2 ->
                             coroutineScope.launch(Dispatchers.Default) {
                                 chatsViewModel.createChat(member2)
                             }
-
-                        }
+                        })
                     }
                 } else {
                     item {

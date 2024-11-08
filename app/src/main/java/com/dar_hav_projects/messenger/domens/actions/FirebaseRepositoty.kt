@@ -233,6 +233,26 @@ class FirebaseRepository@Inject constructor(
         }
     }
 
+
+    override suspend fun fetchUserDataByID(userId: String): Result<UserData?> {
+        return try {
+            val document = userId?.let {
+                firestore.collection(COLLECTION_USERDATA)
+                    .document(it)
+                    .get()
+                    .await()
+            }
+
+            val userData = document?.toObject(UserData::class.java)
+            Result.success(userData)
+        } catch (ex: Exception) {
+            Result.failure(ex)
+        }
+    }
+
+
+
+
     override suspend fun fetchChats(): Result<List<Chat>> = suspendCancellableCoroutine { res ->
         val userUid = auth.currentUser?.uid.toString()
         Log.d("MyLog", "User UID: $userUid")
@@ -268,9 +288,16 @@ class FirebaseRepository@Inject constructor(
 
     override suspend fun createChat(member2: String): Result<Boolean> = suspendCoroutine { res ->
         val userId = auth.currentUser?.uid.toString()
+
+        val newChatRef = firestore.collection(COLLECTION_CHATS).document()
+        val chatId = newChatRef.id
+
         val chatData = hashMapOf(
+            COLLECTION_CHAT_ID to chatId,
             COLLECTION_CHATS_MEMBER1 to userId,
-            COLLECTION_CHATS_MEMBER2 to member2
+            COLLECTION_CHATS_MEMBER2 to member2,
+            COLLECTION_CHATS_LAST_MESSAGE to "No messages",
+            COLLECTION_CHATS_LAST_MESSAGE_TIMESTAMP to 0
         )
 
         firestore
@@ -286,6 +313,35 @@ class FirebaseRepository@Inject constructor(
             .addOnFailureListener { ex ->
                 res.resume(Result.failure(ex))
             }
+    }
+
+    override suspend fun getChatName(item: Chat): Result<String> = suspendCoroutine { res ->
+        val userId = auth.currentUser?.uid.toString()
+
+        if (userId == item.member1UId) {
+            CoroutineScope(Dispatchers.IO).launch {
+               fetchUserDataByID(item.member2UId)
+                   .onSuccess { user ->
+                   if (user != null) {
+                       res.resume(Result.success(user.name))
+                   }
+                }.onFailure {
+                       res.resume(Result.success(""))
+                   }
+            }
+        }else{
+            CoroutineScope(Dispatchers.IO).launch {
+                fetchUserDataByID(item.member1UId)
+                    .onSuccess { user ->
+                        if (user != null) {
+                            res.resume(Result.success(user.name))
+                        }
+                    }.onFailure {
+                        res.resume(Result.success(""))
+                    }
+            }
+        }
+
     }
 
 
@@ -364,7 +420,8 @@ class FirebaseRepository@Inject constructor(
         private const val COLLECTION_USERDATA_URL = "url"
 
         private const val COLLECTION_CHATS = "Chats"
-        private const val COLLECTION_CHATS_ID = "chatId"
+        private const val COLLECTION_CHAT_NAME = "chatName"
+        private const val COLLECTION_CHAT_ID = "chatId"
         private const val COLLECTION_CHATS_LAST_MESSAGE = "lastMessage"
         private const val COLLECTION_CHATS_LAST_MESSAGE_TIMESTAMP = "lastMessageTimestamp"
         private const val COLLECTION_CHATS_MEMBER1 = "member1UId"

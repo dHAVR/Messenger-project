@@ -20,6 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -33,7 +37,10 @@ import com.dar_hav_projects.messenger.ui.theme.body1
 import com.dar_hav_projects.messenger.ui.theme.meta1
 import com.dar_hav_projects.messenger.ui.theme.meta2
 import com.dar_hav_projects.messenger.utils.DateConvertor
+import com.dar_hav_projects.messenger.utils.Routes
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun ChatCard(
@@ -41,12 +48,20 @@ fun ChatCard(
     viewModel: ChatsViewModel,
     onNavigate: (String) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
+    var chatName by viewModel.chatName
+
+    LaunchedEffect(Unit) {
+        viewModel.getChatName(item)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 16.dp)
             .clickable {
-                onNavigate(item.chatId)
+                onNavigate("${Routes.Chat.name}/${item.chatId}")
             }
             .shadow(10.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -55,7 +70,7 @@ fun ChatCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 16.dp)
+                .padding(vertical = 20.dp, horizontal = 16.dp)
                 .background(Color.Transparent),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -75,7 +90,7 @@ fun ChatCard(
                     painter = painterResource(id = R.drawable.ic_chats),
                     contentDescription = "Chat Icon",
                     tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp).padding(5.dp)
                 )
             }
 
@@ -83,7 +98,7 @@ fun ChatCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.chatName,
+                    text = chatName,
                     style = body1,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -96,7 +111,11 @@ fun ChatCard(
             }
 
             Text(
-                text = DateConvertor.formatDateTime(item.lastMessageTimestamp ?: 0),
+                text = if (item.lastMessageTimestamp == 0L || item.lastMessageTimestamp == null){
+                    ""
+                }else{
+                    DateConvertor.formatDateTime(item.lastMessageTimestamp ?: 0)
+                },
                 style = meta2,
                 color = MaterialTheme.colorScheme.onSurface
             )

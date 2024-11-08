@@ -14,9 +14,11 @@ interface I_NetworkActions {
 
     suspend fun saveUserData(nickname: String, name: String, surname: String, imageUri: Uri?): Result<Any>
     suspend fun fetchUserData():  Result<UserData?>
+    suspend fun fetchUserDataByID(userId: String):  Result<UserData?>
 
     suspend fun fetchChats():  Result<List<Chat>>
     suspend fun createChat(member2: String): Result<Boolean>
+    suspend fun getChatName(item: Chat): Result<String>
 
 
     suspend fun fetchContacts():  Result<List<Contact>>

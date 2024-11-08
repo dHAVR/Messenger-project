@@ -2,6 +2,7 @@ package com.dar_hav_projects.messenger.view_models
 
 import android.os.Bundle
 import android.util.Log
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.LiveData
@@ -10,6 +11,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.savedstate.SavedStateRegistryOwner
+import com.dar_hav_projects.messenger.db.MessageEntity
+import com.dar_hav_projects.messenger.db.MessagesRepository
 import com.dar_hav_projects.messenger.di.AppComponent
 import com.dar_hav_projects.messenger.domens.actions.I_NetworkActions
 import com.dar_hav_projects.messenger.domens.models.Chat
@@ -27,13 +30,25 @@ class ChatsViewModel (
     @Inject
     lateinit var networkActions: I_NetworkActions
 
+    @Inject
+    lateinit var messagesRepo: MessagesRepository
+
+
     private var _chats = MutableLiveData<List<Chat>>()
     val chats: LiveData<List<Chat>> = _chats
 
     var messageText = mutableStateOf("")
 
+    var chatName = mutableStateOf("")
+
     suspend fun createChat(member2: String): Result<Boolean> {
         return networkActions.createChat(member2)
+    }
+
+    suspend fun getChatName(chat: Chat) {
+        networkActions.getChatName(chat).onSuccess {
+            chatName.value = it
+        }
     }
 
 
