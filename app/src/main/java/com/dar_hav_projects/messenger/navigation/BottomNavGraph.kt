@@ -18,8 +18,8 @@ import com.dar_hav_projects.messenger.utils.Routes
 import com.dar_hav_projects.messenger.utils.appComponent
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
 import com.dar_hav_projects.messenger.view_models.ContactsViewModel
+import com.dar_hav_projects.messenger.view_models.MessagesViewModel
 import com.google.accompanist.navigation.animation.composable
-import com.google.api.Property
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -44,6 +44,15 @@ fun BottomNavGraph(
         )
     )
 
+
+    val messagesViewModel: MessagesViewModel = viewModel(
+        key = "Message",
+        factory = MessagesViewModel.provideFactory(
+            LocalContext.current.appComponent(),
+            owner = LocalSavedStateRegistryOwner.current
+        )
+    )
+
     NavHost(navController = navController, startDestination = Routes.ChatsList.name) {
 
         composable(Routes.ChatsList.name) {
@@ -59,7 +68,7 @@ fun BottomNavGraph(
             })
         ) { backStackEntry ->
             backStackEntry.arguments?.getString("chatID")?.let {
-                ChatScreen(chatViewModel, it)
+                ChatScreen(chatViewModel, it, messagesViewModel)
             }
         }
 
