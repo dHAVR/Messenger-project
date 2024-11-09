@@ -66,6 +66,7 @@ dependencies {
 
     implementation ("androidx.compose.material:material:1.4.2")
     implementation("io.coil-kt:coil-compose:2.0.0")
+    implementation(libs.androidx.runtime.livedata)
 
 
     val dagger_version = "2.52"

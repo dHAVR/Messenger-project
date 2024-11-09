@@ -22,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,10 +52,12 @@ fun ChatCard(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    var chatName by viewModel.chatName
+    var chatName by remember {
+        mutableStateOf("")
+    }
 
     LaunchedEffect(Unit) {
-        viewModel.getChatName(item)
+        chatName = viewModel.getChatName(item)
     }
 
     Card(
@@ -90,7 +94,9 @@ fun ChatCard(
                     painter = painterResource(id = R.drawable.ic_chats),
                     contentDescription = "Chat Icon",
                     tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(24.dp).padding(5.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(5.dp)
                 )
             }
 

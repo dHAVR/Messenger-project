@@ -7,6 +7,7 @@ import com.dar_hav_projects.messenger.di.AppComponent
 import com.dar_hav_projects.messenger.domens.models.Chat
 import com.dar_hav_projects.messenger.domens.models.Contact
 import com.dar_hav_projects.messenger.domens.models.IsSignedEnum
+import com.dar_hav_projects.messenger.domens.models.Message
 import com.dar_hav_projects.messenger.domens.models.UserData
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
@@ -18,6 +19,9 @@ import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
@@ -344,6 +348,94 @@ class FirebaseRepository@Inject constructor(
 
     }
 
+    override suspend fun listenForMessages(chatID: String): Flow<List<Message>> = callbackFlow {
+        val listenerRegistration = firestore.collection(COLLECTION_MESSAGES)
+            .whereEqualTo(COLLECTION_MESSAGES_CHAT_ID, chatID)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("FirestoreError", "Listening failed: ", error)
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                snapshot?.let {
+                    val items = it.documents.mapNotNull { doc -> doc.toObject(Message::class.java) }
+                    Log.d("MyLog", "listener $items")
+                    trySend(items).isSuccess
+                }
+            }
+
+        awaitClose { listenerRegistration.remove() }
+    }
+
+
+    override suspend fun createMessage(message: Message): Result<Boolean> = suspendCancellableCoroutine { continuation ->
+        val userId = auth.currentUser?.uid.toString()
+
+        val newMessageRef = firestore.collection(COLLECTION_MESSAGES).document()
+        val messageId = newMessageRef.id
+
+        val chatData = hashMapOf(
+            COLLECTION_MESSAGE_ID to messageId,
+            COLLECTION_MESSAGES_CHAT_ID to message.chatId,
+            COLLECTION_MESSAGES_SENDER_ID to userId,
+            COLLECTION_MESSAGES_TIMESTAMP to message.timestamp,
+            COLLECTION_MESSAGES_CONTENT to message.content,
+            COLLECTION_MESSAGES_IS_READ to message.isRead
+        )
+
+        firestore.collection(COLLECTION_MESSAGES)
+            .add(chatData)
+            .addOnCompleteListener { result ->
+                if (continuation.isActive) {
+                    if (result.isSuccessful) {
+                        continuation.resume(Result.success(true), null)
+                    } else {
+                        continuation.resume(Result.failure(Throwable("Can't connect to server")), null)
+                    }
+                }
+            }
+            .addOnFailureListener { ex ->
+                if (continuation.isActive) {
+                    continuation.resume(Result.failure(ex), null)
+                }
+            }
+    }
+
+
+    override suspend fun deleteMessage(message: Message): Result<Boolean> = suspendCancellableCoroutine { continuation ->
+        val userId = auth.currentUser?.uid.toString()
+
+       if(message.senderId != userId){
+           firestore.collection(COLLECTION_MESSAGES)
+               .whereEqualTo(COLLECTION_MESSAGE_ID, message.messageId)
+               .get()
+               .addOnSuccessListener { querySnapshot ->
+                   if (!querySnapshot.isEmpty) {
+                       val batch = firestore.batch()
+                       for (document in querySnapshot.documents) {
+                           batch.delete(document.reference)
+                       }
+
+                       batch.commit()
+                           .addOnSuccessListener {
+                               continuation.resume(Result.success(true), null)
+                           }
+                           .addOnFailureListener { ex ->
+                               continuation.resume(Result.failure(ex), null)
+                           }
+                   } else {
+                       continuation.resume(Result.failure(NoSuchElementException("No message found with the given ID")), null)
+                   }
+               }
+               .addOnFailureListener { ex ->
+                   continuation.resume(Result.failure(ex), null)
+               }
+       }
+
+    }
+
+
 
     override suspend fun fetchContacts(): Result<List<Contact>> = suspendCoroutine { res ->
         val userUid = auth.currentUser?.uid.toString()
@@ -434,6 +526,14 @@ class FirebaseRepository@Inject constructor(
         private const val COLLECTION_CONTACTS_NICKNAME = "nickname"
         private const val COLLECTION_CONTACTS_PROFILE_PHOTO_URL = "profileImageUrl"
         private const val COLLECTION_CONTACTS_PROFILE_UID = "userId"
+
+        private const val COLLECTION_MESSAGES = "Messages"
+        private const val COLLECTION_MESSAGE_ID = "messageId"
+        private const val COLLECTION_MESSAGES_CHAT_ID = "charId"
+        private const val COLLECTION_MESSAGES_SENDER_ID = "senderId"
+        private const val COLLECTION_MESSAGES_TIMESTAMP = "timestamp"
+        private const val COLLECTION_MESSAGES_CONTENT = "content"
+        private const val COLLECTION_MESSAGES_IS_READ = "isRead"
     }
 
 

@@ -1,5 +1,6 @@
 package com.dar_hav_projects.messenger.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,17 +22,46 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.dar_hav_projects.messenger.domens.models.Message
 import com.dar_hav_projects.messenger.ui.small_composables.TopAppBarWithBackAction
+import com.dar_hav_projects.messenger.utils.TimeProvider
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
-import com.google.api.Property
+import com.dar_hav_projects.messenger.view_models.MessagesViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(viewModel: ChatsViewModel, chatID: String){
+fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: MessagesViewModel){
+
+    val coroutineScope = rememberCoroutineScope()
+    val messages by messagesViewModel.messages.observeAsState(initial = emptyList())
+    Log.d("MyLog", "ChatScreen ${messages.isEmpty()}")
+
+    val itemsList = messagesViewModel.messagesDB.collectAsState(initial = emptyList())
+    Log.d("MyLog", "Messages in db : ${itemsList.value} ")
+
+    LaunchedEffect(messages) {
+        Log.d("MyLog", "LaunchedEffect(chatID)")
+        messagesViewModel.setChatId(chatID)
+        messagesViewModel.listenForMessages(chatID)
+        if (messages.isNotEmpty()) {
+            Log.d("MyLog", " (messages.isNotEmpty()")
+            messages.let {
+                Log.d("MyLog", " messages?.let createMessageDB")
+                messagesViewModel.createMessageDB(it.last())
+            }
+            messages.let { messagesViewModel.deleteMessage(it.last()) }
+        }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -107,7 +137,20 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String){
                         unfocusedIndicatorColor = Color.Transparent
                     )
                 )
-                IconButton(onClick = {  }) {
+                IconButton(onClick = {
+                    coroutineScope.launch(Dispatchers.Default) {
+                        messagesViewModel.createMessage(
+                            Message(
+                                "",
+                                chatID,
+                                "",
+                                TimeProvider.getCurrentTime(),
+                                viewModel.messageText.value,
+                                false
+                            )
+                        )
+                    }
+                }) {
                     Icon(Icons.Default.Send, contentDescription = "Send")
                 }
             }

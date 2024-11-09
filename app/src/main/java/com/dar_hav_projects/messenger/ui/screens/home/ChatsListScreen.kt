@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,11 +32,16 @@ fun ChatsListScreen(
     var chats by remember {
         mutableStateOf(emptyList<Chat>())
     }
+
     viewModel.chats.observe(lifecycleOwner, Observer { data ->
         if (data.isNotEmpty()) {
             chats = data
         }
     })
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchChats()
+    }
 
 
     Scaffold(
