@@ -1,6 +1,7 @@
 package com.dar_hav_projects.messenger.view_models
 
 import android.os.Bundle
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.LiveData
@@ -42,6 +43,7 @@ class MessagesViewModel(
 
     fun setChatId(newChatId: String) {
         chatId.value = newChatId
+        Log.d("MyLog", "Messages in db : ${newChatId} ")
         messagesDB = messagesRepo.getMessagesForChat(newChatId)
     }
 

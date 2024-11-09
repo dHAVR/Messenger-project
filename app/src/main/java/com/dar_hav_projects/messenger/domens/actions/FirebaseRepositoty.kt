@@ -529,7 +529,7 @@ class FirebaseRepository@Inject constructor(
 
         private const val COLLECTION_MESSAGES = "Messages"
         private const val COLLECTION_MESSAGE_ID = "messageId"
-        private const val COLLECTION_MESSAGES_CHAT_ID = "charId"
+        private const val COLLECTION_MESSAGES_CHAT_ID = "chatId"
         private const val COLLECTION_MESSAGES_SENDER_ID = "senderId"
         private const val COLLECTION_MESSAGES_TIMESTAMP = "timestamp"
         private const val COLLECTION_MESSAGES_CONTENT = "content"
