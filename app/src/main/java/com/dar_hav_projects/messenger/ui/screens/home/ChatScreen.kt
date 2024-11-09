@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
@@ -31,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.dar_hav_projects.messenger.domens.models.Message
+import com.dar_hav_projects.messenger.ui.small_composables.ChatCard
+import com.dar_hav_projects.messenger.ui.small_composables.MessageCard
 import com.dar_hav_projects.messenger.ui.small_composables.TopAppBarWithBackAction
 import com.dar_hav_projects.messenger.utils.TimeProvider
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
@@ -42,26 +46,37 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: MessagesViewModel){
 
+    val listState = rememberLazyListState()
+
     val coroutineScope = rememberCoroutineScope()
     val messages by messagesViewModel.messages.observeAsState(initial = emptyList())
-    Log.d("MyLog", "ChatScreen ${messages.isEmpty()}")
 
-    val itemsList = messagesViewModel.messagesDB.collectAsState(initial = emptyList())
-    Log.d("MyLog", "Messages in db : ${itemsList.value} ")
+    val messagesDB = messagesViewModel.messagesDB.collectAsState(initial = emptyList())
+
 
     LaunchedEffect(messages) {
-        Log.d("MyLog", "LaunchedEffect(chatID)")
         messagesViewModel.setChatId(chatID)
         messagesViewModel.listenForMessages(chatID)
         if (messages.isNotEmpty()) {
-            Log.d("MyLog", " (messages.isNotEmpty()")
             messages.let {
-                Log.d("MyLog", " messages?.let createMessageDB")
                 messagesViewModel.createMessageDB(it.last())
             }
             messages.let { messagesViewModel.deleteMessage(it.last()) }
+
+            coroutineScope.launch {
+                listState.scrollToItem(messagesDB.value.size - 1)
+            }
         }
     }
+
+    LaunchedEffect(messagesDB.value){
+        if (messagesDB.value.isNotEmpty()) {
+            coroutineScope.launch {
+                listState.scrollToItem(messagesDB.value.size - 1)
+            }
+        }
+    }
+
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -83,36 +98,14 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
                 modifier = Modifier
                     .weight(4f)
                     .padding(vertical = 8.dp),
+                state = listState
             ) {
-                val messages = listOf(
-                    Pair("Taya", "Hi!"),
-                    Pair("Daryna", "Hey")
-                )
 
-                items(messages) { (sender, message) ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        horizontalAlignment = if (sender == "Daryna") Alignment.Start else Alignment.End
-                    ) {
-                        Text(
-                            text = sender,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        Text(
-                            text = message,
-                            modifier = Modifier
-                                .background(
-                                    color = if (sender == "Daryna") MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                                .padding(12.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                itemsIndexed(messagesDB.value) { _, item ->
+                    MessageCard(item){
+
                     }
+
                 }
             }
             Row(
@@ -138,6 +131,7 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
                     )
                 )
                 IconButton(onClick = {
+                    val content = viewModel.messageText.value
                     coroutineScope.launch(Dispatchers.Default) {
                         messagesViewModel.createMessage(
                             Message(
@@ -145,12 +139,14 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
                                 chatID,
                                 "",
                                 TimeProvider.getCurrentTime(),
-                                viewModel.messageText.value,
+                                content,
                                 false
                             )
                         )
                     }
-                }) {
+                    viewModel.messageText.value = ""
+                }
+                ) {
                     Icon(Icons.Default.Send, contentDescription = "Send")
                 }
             }
