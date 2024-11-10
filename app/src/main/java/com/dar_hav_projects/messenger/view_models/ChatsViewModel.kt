@@ -2,7 +2,6 @@ package com.dar_hav_projects.messenger.view_models
 
 import android.os.Bundle
 import android.util.Log
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.LiveData
@@ -11,13 +10,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.savedstate.SavedStateRegistryOwner
-import com.dar_hav_projects.messenger.db.MessageEntity
-import com.dar_hav_projects.messenger.db.MessagesRepository
 import com.dar_hav_projects.messenger.di.AppComponent
 import com.dar_hav_projects.messenger.domens.actions.I_NetworkActions
 import com.dar_hav_projects.messenger.domens.models.Chat
-import com.dar_hav_projects.messenger.domens.models.Contact
-import com.dar_hav_projects.messenger.domens.models.UserData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,6 +35,10 @@ class ChatsViewModel (
         return networkActions.createChat(member2)
     }
 
+    suspend fun deleteChat(chatID: String): Result<Boolean> {
+        return networkActions.deleteChat(chatID)
+    }
+
     suspend fun getChatName(chat: Chat): String {
         return try {
             val result = networkActions.getChatName(chat)
@@ -53,8 +52,17 @@ class ChatsViewModel (
 
     fun fetchChats() {
         viewModelScope.launch(Dispatchers.Default){
-            networkActions.fetchChats().onSuccess {
+            networkActions.fetchChats()
+                .onFailure {
+                    Log.d("MyLoggg", "fetchChats() onFailure")
+                    withContext(Dispatchers.Main) {
+                        _chats.value = emptyList()
+                    }
+                }
+                .onSuccess {
+                    Log.d("MyLoggg", "fetchChats() onSuccess")
                 withContext(Dispatchers.Main) {
+                    Log.d("MyLoggg", "fetchChats() onSuccess $it")
                     _chats.value = it
                 }
             }

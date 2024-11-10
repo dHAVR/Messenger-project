@@ -20,6 +20,7 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -159,13 +160,9 @@ class FirebaseRepository@Inject constructor(
         val userId = auth.currentUser?.uid
 
         if (userId == null) {
-            Log.e("Authentication", "User not authenticated")
             continuation.resume(Result.failure(Throwable("User not authenticated")))
             return@suspendCoroutine
         }
-
-        Log.d("UserData", "User ID: $userId")
-        Log.d("UserData", "Image URI: $imageUri")
 
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
@@ -266,7 +263,6 @@ class FirebaseRepository@Inject constructor(
 
     override suspend fun fetchChats(): Result<List<Chat>> = suspendCancellableCoroutine { res ->
         val userUid = auth.currentUser?.uid.toString()
-        Log.d("MyLog", "User UID: $userUid")
 
         val chats = mutableListOf<Chat>()
         val firestoreCollection = firestore.collection(COLLECTION_CHATS)
@@ -276,18 +272,15 @@ class FirebaseRepository@Inject constructor(
             .get()
             .addOnSuccessListener { result ->
                 chats.addAll(result.toObjects(Chat::class.java))
-                Log.d("MyLog", "Chats after member1UId query: $chats")
 
                 firestoreCollection
                     .whereEqualTo(COLLECTION_CHATS_MEMBER2, userUid)
                     .get()
                     .addOnSuccessListener { result2 ->
                         chats.addAll(result2.toObjects(Chat::class.java))
-                        Log.d("MyLog", "Final Chats: $chats")
                         res.resume(Result.success(chats))
                     }
                     .addOnFailureListener { ex ->
-                        Log.d("MyLog", "Failure in member2UId query: ${ex.message}")
                         res.resume(Result.failure(ex))
                     }
             }
@@ -336,16 +329,15 @@ class FirebaseRepository@Inject constructor(
             .get()
             .addOnSuccessListener { result ->
                 val item = result.toObjects(Chat::class.java).lastOrNull()
-                Log.d("MyLogPUBLIC", "chat $item")
+
                 if (item != null) {
-                    Log.d("MyLogPUBLIC", "if (item != null)")
+
                     if (userId == item.member1UId) {
-                        Log.d("MyLogPUBLIC", "if (userId == item.member1UId)")
+
                         CoroutineScope(Dispatchers.IO).launch {
                             fetchUserDataByID(item.member2UId)
                                 .onSuccess { user ->
                                     if (user != null) {
-                                        Log.d("MyLogPUBLIC", "if (userId == item.member1UId) if (user != null)")
                                         res.resume(Result.success(user.publicKey))
                                     }
                                 }.onFailure {
@@ -353,12 +345,11 @@ class FirebaseRepository@Inject constructor(
                                 }
                         }
                     } else {
-                        Log.d("MyLogPUBLIC", "if (userId == item.member2UId)")
+
                         CoroutineScope(Dispatchers.IO).launch {
                             fetchUserDataByID(item.member1UId)
                                 .onSuccess { user ->
                                     if (user != null) {
-                                        Log.d("MyLogPUBLIC", "if (userId == item.member2UId)  key: ${user.publicKey}")
                                         res.resume(Result.success(user.publicKey))
                                     }
                                 }.onFailure {
@@ -403,6 +394,33 @@ class FirebaseRepository@Inject constructor(
 
     }
 
+    override suspend fun deleteChat(chatId: String): Result<Boolean> = suspendCancellableCoroutine { continuation ->
+        firestore.collection(COLLECTION_CHATS)
+            .whereEqualTo(COLLECTION_CHAT_ID, chatId)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                if (!querySnapshot.isEmpty) {
+                    val batch = firestore.batch()
+                    for (document in querySnapshot.documents) {
+                        batch.delete(document.reference)
+                    }
+
+                    batch.commit()
+                        .addOnSuccessListener {
+                            continuation.resume(Result.success(true), null)
+                        }
+                        .addOnFailureListener { ex ->
+                            continuation.resume(Result.failure(ex), null)
+                        }
+                } else {
+                    continuation.resume(Result.failure(NoSuchElementException("No message found with the given ID")), null)
+                }
+            }
+            .addOnFailureListener { ex ->
+                continuation.resume(Result.failure(ex), null)
+            }
+    }
+
     override suspend fun listenForMessages(chatID: String): Flow<List<Message>> = callbackFlow {
         val listenerRegistration = firestore.collection(COLLECTION_MESSAGES)
             .whereEqualTo(COLLECTION_MESSAGES_CHAT_ID, chatID)
@@ -422,7 +440,6 @@ class FirebaseRepository@Inject constructor(
 
         awaitClose { listenerRegistration.remove() }
     }
-
 
     override suspend fun createMessage(message: Message): Result<Boolean> = suspendCancellableCoroutine { continuation ->
         val userId = auth.currentUser?.uid.toString()
@@ -543,8 +560,43 @@ class FirebaseRepository@Inject constructor(
             .addOnFailureListener { ex ->
                 res.resume(Result.failure(ex))
             }
-
     }
+
+    override suspend fun addContactForFriend(item: UserData): Result<Boolean> {
+        val userId = auth.currentUser?.uid
+
+        if (userId == null) {
+            return Result.failure(Throwable("User not authenticated"))
+        }
+
+        val userdataResult = fetchUserDataByID(userId)
+
+        return if (userdataResult.isSuccess && userdataResult.getOrNull() != null) {
+            val userdata = userdataResult.getOrNull()
+            if (userdata != null) {
+                firestore
+                    .collection(COLLECTION_CONTACTS)
+                    .document()
+                    .set(
+                        hashMapOf(
+                            COLLECTION_CONTACTS_CONTACT_WITH to item.userUID,
+                            COLLECTION_CONTACTS_NAME to userdata.name,
+                            COLLECTION_CONTACTS_SURNAME to userdata.surname,
+                            COLLECTION_CONTACTS_NICKNAME to userdata.nickname,
+                            COLLECTION_CONTACTS_PROFILE_PHOTO_URL to userdata.url,
+                            COLLECTION_CONTACTS_PROFILE_UID to userdata.userUID
+                        ),
+                        SetOptions.merge()
+                    )
+                    .await()
+            }
+
+            Result.success(true)
+        } else {
+            Result.failure(Throwable("User data not found or fetchUserDataByID failed"))
+        }
+    }
+
 
     override suspend fun searchContact(nickname: String): Result<List<UserData>> = suspendCoroutine { res ->
         val userId = auth.currentUser?.uid.toString()
@@ -564,7 +616,33 @@ class FirebaseRepository@Inject constructor(
             }
     }
 
+    override suspend fun deleteContact(contactId: String): Result<Boolean> = suspendCancellableCoroutine { continuation ->
 
+        firestore.collection(COLLECTION_CONTACTS)
+            .whereEqualTo(COLLECTION_CONTACTS_PROFILE_UID, contactId)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                if (!querySnapshot.isEmpty) {
+                    val batch = firestore.batch()
+                    for (document in querySnapshot.documents) {
+                        batch.delete(document.reference)
+                    }
+
+                    batch.commit()
+                        .addOnSuccessListener {
+                            continuation.resume(Result.success(true), null)
+                        }
+                        .addOnFailureListener { ex ->
+                            continuation.resume(Result.failure(ex), null)
+                        }
+                } else {
+                    continuation.resume(Result.failure(NoSuchElementException("No message found with the given ID")), null)
+                }
+            }
+            .addOnFailureListener { ex ->
+                continuation.resume(Result.failure(ex), null)
+            }
+    }
 
 
     companion object{

@@ -23,6 +23,7 @@ interface I_NetworkActions {
     suspend fun fetchChats():  Result<List<Chat>>
     suspend fun createChat(member2: String): Result<Boolean>
     suspend fun getChatName(item: Chat): Result<String>
+    suspend fun deleteChat(chatId: String): Result<Boolean>
 
     suspend fun listenForMessages(chatID: String): Flow<List<Message>>
     suspend fun createMessage(message: Message): Result<Boolean>
@@ -35,4 +36,6 @@ interface I_NetworkActions {
     suspend fun fetchContacts():  Result<List<Contact>>
     suspend fun addContact(item: UserData): Result<Boolean>
     suspend fun searchContact(nickname: String): Result<List<UserData>>
+    suspend fun deleteContact(contactId: String): Result<Boolean>
+    suspend fun addContactForFriend(item: UserData): Result<Boolean>
 }

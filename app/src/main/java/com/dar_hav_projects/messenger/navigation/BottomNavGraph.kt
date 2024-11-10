@@ -56,7 +56,7 @@ fun BottomNavGraph(
     NavHost(navController = navController, startDestination = Routes.ChatsList.name) {
 
         composable(Routes.ChatsList.name) {
-            ChatsListScreen(chatViewModel){ route ->
+            ChatsListScreen(chatViewModel, messagesViewModel){ route ->
                 navController.navigate(route)
             }
         }

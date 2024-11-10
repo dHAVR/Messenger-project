@@ -1,5 +1,6 @@
 package com.dar_hav_projects.messenger.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import com.dar_hav_projects.messenger.view_models.ChatsViewModel
 import com.dar_hav_projects.messenger.view_models.ContactsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,9 +56,7 @@ fun ContactsListScreen(
     }
 
     viewModel.contacts.observe(lifecycleOwner, Observer { data ->
-        if (data.isNotEmpty()) {
             contacts = data
-        }
     })
 
     LaunchedEffect(Unit) {
@@ -101,11 +101,20 @@ fun ContactsListScreen(
             ) {
                 if (contacts.isNotEmpty()) {
                     itemsIndexed(contacts) { _, item ->
-                        ContactCard(item, onDelete = { userUID ->
-
+                        ContactCard(item,
+                            onDelete = { userUID ->
+                            coroutineScope.launch(Dispatchers.Default) {
+                                viewModel.deleteContact(userUID)
+                                    withContext(Dispatchers.Main){
+                                        viewModel.fetchContacts()
+                                    }
+                            }
                         }, onClick = { member2 ->
                             coroutineScope.launch(Dispatchers.Default) {
                                 chatsViewModel.createChat(member2)
+                                withContext(Dispatchers.Main){
+                                    onNavigate(Routes.ChatsList.name)
+                                }
                             }
                         })
                     }

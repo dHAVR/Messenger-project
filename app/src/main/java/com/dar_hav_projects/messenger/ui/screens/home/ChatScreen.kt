@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: MessagesViewModel){
+fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: MessagesViewModel) {
 
     val listState = rememberLazyListState()
 
@@ -78,7 +78,7 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
         }
     }
 
-    LaunchedEffect(messagesDB.value){
+    LaunchedEffect(messagesDB.value) {
         Log.d("MyLog", " LaunchedEffect(messagesDB.value)")
         if (messagesDB.value.isNotEmpty()) {
             coroutineScope.launch {
@@ -91,7 +91,7 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBarWithBackAction(title = "Chat"){
+            TopAppBarWithBackAction(title = "Chat") {
 
             }
         }
@@ -114,14 +114,16 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
                 itemsIndexed(messagesDB.value) { _, item ->
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = if(messagesViewModel.checkSender(item.senderId)) {
+                        horizontalAlignment = if (messagesViewModel.checkSender(item.senderId)) {
                             Alignment.End
-                        }else{
+                        } else {
                             Alignment.Start
                         }
                     ) {
-                        MessageCard(item, messagesViewModel){
-
+                        MessageCard(item, messagesViewModel) { message ->
+                            coroutineScope.launch(Dispatchers.Default) {
+                                messagesViewModel.deleteMessageByIdDB(message)
+                            }
                         }
                     }
 
@@ -138,7 +140,7 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
                 TextField(
                     value = viewModel.messageText.value,
                     onValueChange = {
-                        viewModel.messageText.value =  it
+                        viewModel.messageText.value = it
                     },
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier

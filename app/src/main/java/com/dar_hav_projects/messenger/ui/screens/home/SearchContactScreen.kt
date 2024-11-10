@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,8 +111,11 @@ fun SearchContactScreen(viewModel: ContactsViewModel, onNavigate: (String) -> Un
 
                 IconButton(onClick = {
                     viewModel.searchContacts(searchInput)
+                    searchInput = ""
+
                 }) {
                     Icon(
+                        modifier = Modifier.size(25.dp),
                         painter = painterResource(id = R.drawable.ic_search),
                         contentDescription = "Search icon",
                         tint = MaterialTheme.colorScheme.onBackground
@@ -128,7 +133,9 @@ fun SearchContactScreen(viewModel: ContactsViewModel, onNavigate: (String) -> Un
                         SearchContactCard(item){ item ->
                             coroutineScope.launch(Dispatchers.Main) {
                                 viewModel.addContact(item).onSuccess {
-                                    onNavigate(Routes.ContactsList.name)
+                                    viewModel.addContactForFriend(item).onSuccess {
+                                        onNavigate(Routes.ContactsList.name)
+                                    }
                                 }
                             }
                         }

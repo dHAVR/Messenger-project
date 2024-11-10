@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 
@@ -48,7 +49,8 @@ import kotlinx.coroutines.launch
 fun ChatCard(
     item: Chat,
     viewModel: ChatsViewModel,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onDelete: (String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -78,12 +80,6 @@ fun ChatCard(
                 .background(Color.Transparent),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
-            ) {
-
-            }
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -125,6 +121,17 @@ fun ChatCard(
                 style = meta2,
                 color = MaterialTheme.colorScheme.onSurface
             )
+
+            IconButton(onClick = {
+                onDelete(item.chatId)
+            }) {
+                Icon(
+                    modifier = Modifier.size(30.dp),
+                    painter = painterResource(id = R.drawable.ic_delete),
+                    contentDescription = "Delete chat",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
         }
     }
 }
