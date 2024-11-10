@@ -3,12 +3,12 @@ package com.dar_hav_projects.messenger.domens.actions
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.dar_hav_projects.messenger.di.AppComponent
 import com.dar_hav_projects.messenger.domens.models.Chat
 import com.dar_hav_projects.messenger.domens.models.Contact
 import com.dar_hav_projects.messenger.domens.models.IsSignedEnum
 import com.dar_hav_projects.messenger.domens.models.Message
 import com.dar_hav_projects.messenger.domens.models.UserData
+import com.google.crypto.tink.subtle.Base64
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.auth
@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.security.PublicKey
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -152,7 +153,8 @@ class FirebaseRepository@Inject constructor(
         nickname: String,
         name: String,
         surname: String,
-        imageUri: Uri?
+        imageUri: Uri?,
+        publicKey: PublicKey?
     ): Result<Any> = suspendCoroutine { continuation ->
         val userId = auth.currentUser?.uid
 
@@ -169,6 +171,10 @@ class FirebaseRepository@Inject constructor(
         val storageRef = storage.reference
         val profileImageRef = storageRef.child("profileImages/$userId.jpg")
 
+        val publicKeyString = publicKey?.encoded?.let {
+            Base64.encodeToString(it, Base64.DEFAULT)
+        } ?: ""
+
         val saveUserDataToFirestore: (String) -> Unit = { downloadUrl ->
             firestore.collection(COLLECTION_USERDATA)
                 .document(userId)
@@ -178,7 +184,8 @@ class FirebaseRepository@Inject constructor(
                         COLLECTION_USERDATA_NICKNAME to nickname,
                         COLLECTION_USERDATA_NAME to name,
                         COLLECTION_USERDATA_SURNAME to surname,
-                        COLLECTION_USERDATA_URL to downloadUrl
+                        COLLECTION_USERDATA_URL to downloadUrl,
+                        COLLECTION_USERDATA_PUBLIC_KEY to publicKeyString
                     )
                 )
                 .addOnSuccessListener {
@@ -319,6 +326,54 @@ class FirebaseRepository@Inject constructor(
             }
     }
 
+
+    override suspend fun getPublicKey(chatID: String): Result<String> = suspendCoroutine { res ->
+        val userId = auth.currentUser?.uid.toString()
+        val firestoreCollection = firestore.collection(COLLECTION_CHATS)
+
+        firestoreCollection
+            .whereEqualTo(COLLECTION_CHAT_ID, chatID)
+            .get()
+            .addOnSuccessListener { result ->
+                val item = result.toObjects(Chat::class.java).lastOrNull()
+                Log.d("MyLogPUBLIC", "chat $item")
+                if (item != null) {
+                    Log.d("MyLogPUBLIC", "if (item != null)")
+                    if (userId == item.member1UId) {
+                        Log.d("MyLogPUBLIC", "if (userId == item.member1UId)")
+                        CoroutineScope(Dispatchers.IO).launch {
+                            fetchUserDataByID(item.member2UId)
+                                .onSuccess { user ->
+                                    if (user != null) {
+                                        Log.d("MyLogPUBLIC", "if (userId == item.member1UId) if (user != null)")
+                                        res.resume(Result.success(user.publicKey))
+                                    }
+                                }.onFailure {
+                                    res.resume(Result.success(""))
+                                }
+                        }
+                    } else {
+                        Log.d("MyLogPUBLIC", "if (userId == item.member2UId)")
+                        CoroutineScope(Dispatchers.IO).launch {
+                            fetchUserDataByID(item.member1UId)
+                                .onSuccess { user ->
+                                    if (user != null) {
+                                        Log.d("MyLogPUBLIC", "if (userId == item.member2UId)  key: ${user.publicKey}")
+                                        res.resume(Result.success(user.publicKey))
+                                    }
+                                }.onFailure {
+                                    res.resume(Result.success(""))
+                                }
+                        }
+                    }
+                }
+
+            } .addOnFailureListener { ex ->
+                res.resume(Result.failure(ex))
+            }
+    }
+
+
     override suspend fun getChatName(item: Chat): Result<String> = suspendCoroutine { res ->
         val userId = auth.currentUser?.uid.toString()
 
@@ -435,6 +490,14 @@ class FirebaseRepository@Inject constructor(
 
     }
 
+    override fun checkSender(userUID: String): Boolean {
+        val userId = auth.currentUser?.uid.toString()
+        return userId == userUID
+    }
+
+    override fun getAlias(): String {
+        return  auth.currentUser?.uid.toString()
+    }
 
 
     override suspend fun fetchContacts(): Result<List<Contact>> = suspendCoroutine { res ->
@@ -502,6 +565,8 @@ class FirebaseRepository@Inject constructor(
     }
 
 
+
+
     companion object{
 
         private const val COLLECTION_USERDATA = "UserData"
@@ -510,6 +575,7 @@ class FirebaseRepository@Inject constructor(
         private const val COLLECTION_USERDATA_NAME = "name"
         private const val COLLECTION_USERDATA_SURNAME = "surname"
         private const val COLLECTION_USERDATA_URL = "url"
+        private const val COLLECTION_USERDATA_PUBLIC_KEY= "publicKey"
 
         private const val COLLECTION_CHATS = "Chats"
         private const val COLLECTION_CHAT_NAME = "chatName"

@@ -7,6 +7,7 @@ import com.dar_hav_projects.messenger.domens.models.IsSignedEnum
 import com.dar_hav_projects.messenger.domens.models.Message
 import com.dar_hav_projects.messenger.domens.models.UserData
 import kotlinx.coroutines.flow.Flow
+import java.security.PublicKey
 
 interface I_NetworkActions {
     suspend fun signUp(email: String, pass: String): Result<Boolean>
@@ -14,9 +15,10 @@ interface I_NetworkActions {
     suspend fun signIn(email: String, pass: String): Result<IsSignedEnum>
     suspend fun isSignedAsync(): IsSignedEnum
 
-    suspend fun saveUserData(nickname: String, name: String, surname: String, imageUri: Uri?): Result<Any>
+    suspend fun saveUserData(nickname: String,name: String,surname: String,imageUri: Uri?, publicKey: PublicKey?): Result<Any>
     suspend fun fetchUserData():  Result<UserData?>
     suspend fun fetchUserDataByID(userId: String):  Result<UserData?>
+    suspend fun getPublicKey(chatID: String): Result<String>
 
     suspend fun fetchChats():  Result<List<Chat>>
     suspend fun createChat(member2: String): Result<Boolean>
@@ -25,6 +27,9 @@ interface I_NetworkActions {
     suspend fun listenForMessages(chatID: String): Flow<List<Message>>
     suspend fun createMessage(message: Message): Result<Boolean>
     suspend fun deleteMessage(message: Message): Result<Boolean>
+    fun checkSender(userUID: String): Boolean
+
+    fun getAlias(): String
 
 
     suspend fun fetchContacts():  Result<List<Contact>>

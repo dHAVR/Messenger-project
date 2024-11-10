@@ -28,7 +28,8 @@ import com.dar_hav_projects.messenger.ui.screens.signInUp.VerifyEmailScreen
 import com.dar_hav_projects.messenger.ui.theme.MessengerTheme
 import com.dar_hav_projects.messenger.utils.Routes
 import com.dar_hav_projects.messenger.utils.appComponent
-import com.google.firebase.auth.FirebaseAuth
+import com.google.crypto.tink.aead.AeadConfig
+import com.google.crypto.tink.hybrid.HybridConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initializeTink()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         this.appComponent().inject(this)
         enableEdgeToEdge()
@@ -126,6 +128,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    fun initializeTink() {
+        AeadConfig.register()
+        HybridConfig.register()
     }
 
 

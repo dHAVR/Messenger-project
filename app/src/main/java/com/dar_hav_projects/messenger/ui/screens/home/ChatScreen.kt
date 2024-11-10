@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,15 +26,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.dar_hav_projects.messenger.domens.models.Message
-import com.dar_hav_projects.messenger.ui.small_composables.ChatCard
 import com.dar_hav_projects.messenger.ui.small_composables.MessageCard
 import com.dar_hav_projects.messenger.ui.small_composables.TopAppBarWithBackAction
+import com.dar_hav_projects.messenger.encryption.Encryption
 import com.dar_hav_projects.messenger.utils.TimeProvider
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
 import com.dar_hav_projects.messenger.view_models.MessagesViewModel
@@ -53,8 +55,15 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
 
     val messagesDB = messagesViewModel.messagesDB.collectAsState(initial = emptyList())
 
+    val content = viewModel.messageText.value
+
+    LaunchedEffect(Unit) {
+        Log.d("MyLog", " LaunchedEffect(Unit)")
+        messagesViewModel.getPublicKey(chatID)
+    }
 
     LaunchedEffect(messages) {
+        Log.d("MyLog", " LaunchedEffect(messages)")
         messagesViewModel.setChatId(chatID)
         messagesViewModel.listenForMessages(chatID)
         if (messages.isNotEmpty()) {
@@ -70,6 +79,7 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
     }
 
     LaunchedEffect(messagesDB.value){
+        Log.d("MyLog", " LaunchedEffect(messagesDB.value)")
         if (messagesDB.value.isNotEmpty()) {
             coroutineScope.launch {
                 listState.scrollToItem(messagesDB.value.size - 1)
@@ -102,15 +112,25 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
             ) {
 
                 itemsIndexed(messagesDB.value) { _, item ->
-                    MessageCard(item){
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = if(messagesViewModel.checkSender(item.senderId)) {
+                            Alignment.End
+                        }else{
+                            Alignment.Start
+                        }
+                    ) {
+                        MessageCard(item, messagesViewModel){
 
+                        }
                     }
+
 
                 }
             }
             Row(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.5f)
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background),
                 verticalAlignment = Alignment.CenterVertically
@@ -131,18 +151,31 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
                     )
                 )
                 IconButton(onClick = {
-                    val content = viewModel.messageText.value
+
                     coroutineScope.launch(Dispatchers.Default) {
+
                         messagesViewModel.createMessage(
                             Message(
                                 "",
                                 chatID,
                                 "",
                                 TimeProvider.getCurrentTime(),
-                                content,
+                                messagesViewModel.encryptMessage(content) ?: "",
                                 false
                             )
                         )
+
+                        messagesViewModel.createMessageDBSender(
+                            Message(
+                                "",
+                                chatID,
+                                "",
+                                TimeProvider.getCurrentTime(),
+                                messagesViewModel.encryptMessageSender(content) ?: "",
+                                false
+                            )
+                        )
+
                     }
                     viewModel.messageText.value = ""
                 }

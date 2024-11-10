@@ -3,7 +3,6 @@ package com.dar_hav_projects.messenger.view_models
 import android.net.Uri
 import android.os.Bundle
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -16,8 +15,7 @@ import com.dar_hav_projects.messenger.domens.actions.I_NetworkActions
 import com.dar_hav_projects.messenger.domens.models.IsSignedEnum
 import com.dar_hav_projects.messenger.domens.models.User
 import com.dar_hav_projects.messenger.domens.models.UserData
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
+import com.dar_hav_projects.messenger.encryption.I_Encryprion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +29,9 @@ class SignViewModel(
 ) : ViewModel() {
 
     @Inject lateinit var networkActions: I_NetworkActions
+
+    @Inject
+    lateinit var encryption: I_Encryprion
 
     var user = mutableStateOf(User())
         private set
@@ -115,7 +116,8 @@ class SignViewModel(
 
     suspend fun saveUserData(uri: Uri?): Result<Any>{
         showLoadingDialog.value = true
-        return networkActions.saveUserData(nickname.value, name.value, surname.value, uri)
+        val publicKey = encryption.generateAndSaveKeyPair(networkActions.getAlias())?.public
+        return networkActions.saveUserData(nickname.value, name.value, surname.value, uri, publicKey)
     }
 
     private suspend fun fetchUserData() {

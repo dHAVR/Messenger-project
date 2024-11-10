@@ -67,12 +67,14 @@ dependencies {
     implementation ("androidx.compose.material:material:1.4.2")
     implementation("io.coil-kt:coil-compose:2.0.0")
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.firebase.crashlytics.buildtools)
 
 
     val dagger_version = "2.52"
     implementation("com.google.dagger:dagger:$dagger_version")
     kapt("com.google.dagger:dagger-compiler:$dagger_version")
 
+    implementation ("com.google.crypto.tink:tink-android:1.7.0")
 
 
     val room_version = "2.6.1"
