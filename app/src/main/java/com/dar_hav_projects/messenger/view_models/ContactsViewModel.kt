@@ -52,10 +52,24 @@ appComponent: AppComponent
        return networkActions.addContact(item)
     }
 
+    suspend fun addContactForFriend(item: UserData): Result<Boolean> {
+        return networkActions.addContactForFriend(item)
+    }
+
+    suspend fun deleteContact(contactID: String): Result<Boolean> {
+        return networkActions.deleteContact(contactID)
+    }
+
 
     fun fetchContacts() {
         viewModelScope.launch(Dispatchers.Default){
-            networkActions.fetchContacts().onSuccess {
+            networkActions.fetchContacts()
+                .onFailure {
+                    withContext(Dispatchers.Main) {
+                        _contacts.value = emptyList()
+                    }
+                }
+                .onSuccess {
                 withContext(Dispatchers.Main) {
                     _contacts.value = it
                 }

@@ -13,4 +13,12 @@ class MessagesRepoImpl(
     override  fun getMessagesForChat(chatId: String): Flow<List<MessageEntity>> {
         return dao.getMessagesForChat(chatId)
     }
+
+    override suspend fun deleteMessageByID(message: MessageEntity) {
+        return dao.deleteMessageByID(message)
+    }
+
+    override suspend fun deleteMessagesForChat(chatId: String) {
+        return dao.deleteMessagesForChat(chatId)
+    }
 }

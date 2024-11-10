@@ -130,17 +130,20 @@ class MessagesViewModel(
             )
     }
 
+    suspend fun deleteMessageByIdDB(message: MessageEntity){
+        messagesRepo.deleteMessageByID(message)
+    }
+
+    suspend fun deleteMessagesForChat(chatId: String){
+        messagesRepo.deleteMessagesForChat(chatId)
+    }
+
 
     suspend fun getPublicKey(chatId: String) {
-        Log.d("MyLogPublic", "etPublicKey(chatId: String) ")
       networkActions.getPublicKey(chatId)
           .onSuccess {
               _publicKey.value = encryption.convertStringToPublicKey(it)
-              Log.d("MyLogPublic", "getPublicKey publicKey: ${_publicKey.value} ")
       }
-          .onFailure {
-              Log.d("MyLogPublic", "getPublicKey publicKey: failed $it")
-          }
 
     }
 
