@@ -7,6 +7,7 @@ import com.dar_hav_projects.messenger.db.MessagesDAO
 import com.dar_hav_projects.messenger.di.AppComponent
 import com.dar_hav_projects.messenger.di.ContextModule
 import com.dar_hav_projects.messenger.di.DaggerAppComponent
+import com.dar_hav_projects.messenger.di.EncryptionModule
 import com.dar_hav_projects.messenger.di.MessagesRepositoryModule
 import com.dar_hav_projects.messenger.di.NetworkActionsModule
 
@@ -29,6 +30,7 @@ class MessengerApp : Application() {
 
         appComponent = DaggerAppComponent
             .builder()
+            .encryptionModule(EncryptionModule(applicationContext))
             .messagesRepositoryModule(MessagesRepositoryModule(messagesDao))
             .networkActionsModule(NetworkActionsModule(applicationContext))
             .contextModule(ContextModule(this))

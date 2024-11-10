@@ -14,10 +14,17 @@ import com.dar_hav_projects.messenger.db.MessageEntity
 import com.dar_hav_projects.messenger.db.MessagesRepository
 import com.dar_hav_projects.messenger.di.AppComponent
 import com.dar_hav_projects.messenger.domens.actions.I_NetworkActions
+import com.dar_hav_projects.messenger.domens.models.Chat
 import com.dar_hav_projects.messenger.domens.models.Message
+import com.dar_hav_projects.messenger.encryption.I_Encryprion
+import com.google.crypto.tink.subtle.Base64
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.security.PrivateKey
+import java.security.PublicKey
 import javax.inject.Inject
 
 class MessagesViewModel(
@@ -30,10 +37,15 @@ class MessagesViewModel(
     @Inject
     lateinit var messagesRepo: MessagesRepository
 
+    @Inject
+    lateinit var encryption: I_Encryprion
+
     val chatId = mutableStateOf("")
 
     private val _messages = MutableLiveData<List<Message>>()
     val messages: LiveData<List<Message>> = _messages
+
+    private val _publicKey = MutableLiveData<PublicKey>()
 
     var messagesDB: Flow<List<MessageEntity>> = flowOf()
 
@@ -43,7 +55,6 @@ class MessagesViewModel(
 
     fun setChatId(newChatId: String) {
         chatId.value = newChatId
-        Log.d("MyLog", "Messages in db : ${newChatId} ")
         messagesDB = messagesRepo.getMessagesForChat(newChatId)
     }
 
@@ -63,17 +74,74 @@ class MessagesViewModel(
         }
     }
 
+
+    fun encryptMessage(message: String): String? {
+        Log.d("MyLog", "encryptMessage publicKey: ${_publicKey.value} ")
+        return _publicKey.value?.let { encryption.encryptMessage(message, it) }
+    }
+
+
+    fun encryptMessageSender(message: String): String? {
+        val publicKey = encryption.getKeyPair(networkActions.getAlias())?.public
+        return publicKey?.let { encryption.encryptMessage(message, it) }
+    }
+
+
+    fun  decryptMessage(encryptedMessage: String): String? {
+        val byteArray = Base64.decode(encryptedMessage, Base64.DEFAULT)
+        val privateKey = encryption.getKeyPair(networkActions.getAlias())?.private
+        return privateKey?.let { encryption.decryptMessage(byteArray, it) }
+    }
+
+
+   fun checkSender(userUID: String): Boolean {
+        return networkActions.checkSender(userUID)
+    }
+
+    private fun getSender(): String{
+        return networkActions.getAlias()
+    }
+
     suspend fun createMessageDB(message: Message) {
-        messagesRepo.insertMessage(
-            MessageEntity(
-                message.messageId,
-                message.chatId,
-                message.senderId,
-                message.content,
-                message.timestamp,
-                message.isRead
+        if(!networkActions.checkSender(message.senderId)){
+            messagesRepo.insertMessage(
+                MessageEntity(
+                    null,
+                    message.chatId,
+                    message.senderId,
+                    message.content,
+                    message.timestamp,
+                    message.isRead
+                )
             )
-        )
+        }
+    }
+
+    suspend fun createMessageDBSender(message: Message) {
+            messagesRepo.insertMessage(
+                MessageEntity(
+                   null,
+                    message.chatId,
+                    getSender(),
+                    message.content,
+                    message.timestamp,
+                    message.isRead
+                )
+            )
+    }
+
+
+    suspend fun getPublicKey(chatId: String) {
+        Log.d("MyLogPublic", "etPublicKey(chatId: String) ")
+      networkActions.getPublicKey(chatId)
+          .onSuccess {
+              _publicKey.value = encryption.convertStringToPublicKey(it)
+              Log.d("MyLogPublic", "getPublicKey publicKey: ${_publicKey.value} ")
+      }
+          .onFailure {
+              Log.d("MyLogPublic", "getPublicKey publicKey: failed $it")
+          }
+
     }
 
     companion object {
