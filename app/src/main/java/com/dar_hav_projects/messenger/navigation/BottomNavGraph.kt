@@ -9,13 +9,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
+import com.dar_hav_projects.messenger.ui.screens.home.AccountScreen
 import com.dar_hav_projects.messenger.ui.screens.home.ChatScreen
 import com.dar_hav_projects.messenger.ui.screens.home.ChatsListScreen
 import com.dar_hav_projects.messenger.ui.screens.home.ContactsListScreen
 import com.dar_hav_projects.messenger.ui.screens.home.SearchContactScreen
-import com.dar_hav_projects.messenger.ui.screens.home.SettingsScreen
 import com.dar_hav_projects.messenger.utils.Routes
 import com.dar_hav_projects.messenger.utils.appComponent
+import com.dar_hav_projects.messenger.view_models.AccountViewModel
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
 import com.dar_hav_projects.messenger.view_models.ContactsViewModel
 import com.dar_hav_projects.messenger.view_models.MessagesViewModel
@@ -53,6 +54,14 @@ fun BottomNavGraph(
         )
     )
 
+    val accountViewModel: AccountViewModel = viewModel(
+        key = "Account",
+        factory = AccountViewModel.provideFactory(
+            LocalContext.current.appComponent(),
+            owner = LocalSavedStateRegistryOwner.current
+        )
+    )
+
     NavHost(navController = navController, startDestination = Routes.ChatsList.name) {
 
         composable(Routes.ChatsList.name) {
@@ -72,8 +81,8 @@ fun BottomNavGraph(
             }
         }
 
-        composable(Routes.Settings.name) {
-            SettingsScreen()
+        composable(Routes.Account.name) {
+            AccountScreen(accountViewModel)
         }
         composable(Routes.ContactsList.name) {
             ContactsListScreen(chatViewModel , contactsViewModel){ route ->

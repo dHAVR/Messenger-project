@@ -17,9 +17,9 @@ sealed class BottomNavItem(
     )
 
     data class SettingsItem (val context: Context): BottomNavItem(
-        "Settings",
+        "Account",
         R.drawable.ic_settings,
-        Routes.Settings.name
+        Routes.Account.name
     )
     data class ContactsItem(val context: Context): BottomNavItem(
         "Contacts",

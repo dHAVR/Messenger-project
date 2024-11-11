@@ -83,7 +83,7 @@ fun BottomNav(
                             }
 
                             is BottomNavItem.SettingsItem -> {
-                                navController.navigate(Routes.Settings.name) {
+                                navController.navigate(Routes.Account.name) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }
