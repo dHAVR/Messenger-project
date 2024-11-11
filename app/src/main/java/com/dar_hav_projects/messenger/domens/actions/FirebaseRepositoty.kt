@@ -258,6 +258,24 @@ class FirebaseRepository@Inject constructor(
         }
     }
 
+    override suspend fun fetchAccountData(): Result<UserData?> {
+        val userId = auth.currentUser?.uid
+        return try {
+            val document = userId?.let {
+                firestore.collection(COLLECTION_USERDATA)
+                    .document(it)
+                    .get()
+                    .await()
+            }
+
+            val userData = document?.toObject(UserData::class.java)
+            Result.success(userData)
+        } catch (ex: Exception) {
+            Result.failure(ex)
+        }
+    }
+
+
 
 
 

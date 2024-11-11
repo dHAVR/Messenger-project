@@ -105,7 +105,8 @@ fun SearchContactScreen(viewModel: ContactsViewModel, onNavigate: (String) -> Un
                     placeholder = { Text("Enter nickname") },
                     colors = TextFieldDefaults.textFieldColors(
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color.Transparent,
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
@@ -122,7 +123,6 @@ fun SearchContactScreen(viewModel: ContactsViewModel, onNavigate: (String) -> Un
                     )
                 }
             }
-
 
             LazyColumn(
                 modifier = Modifier

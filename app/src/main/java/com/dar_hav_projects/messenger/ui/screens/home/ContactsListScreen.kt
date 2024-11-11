@@ -1,6 +1,7 @@
 package com.dar_hav_projects.messenger.ui.screens.home
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,10 +29,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Observer
 import com.dar_hav_projects.messenger.domens.models.Contact
 import com.dar_hav_projects.messenger.ui.small_composables.ContactCard
+import com.dar_hav_projects.messenger.ui.small_composables.TopAppBarWithTitle
 import com.dar_hav_projects.messenger.utils.Routes
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
 import com.dar_hav_projects.messenger.view_models.ContactsViewModel
@@ -91,12 +94,12 @@ fun ContactsListScreen(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             LazyColumn(
                 modifier = Modifier
-                    .padding(paddingValues)
                     .fillMaxSize()
             ) {
                 if (contacts.isNotEmpty()) {

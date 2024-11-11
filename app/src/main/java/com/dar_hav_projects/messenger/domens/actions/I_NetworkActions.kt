@@ -31,6 +31,7 @@ interface I_NetworkActions {
     fun checkSender(userUID: String): Boolean
 
     fun getAlias(): String
+    suspend fun fetchAccountData(): Result<UserData?>
 
 
     suspend fun fetchContacts():  Result<List<Contact>>

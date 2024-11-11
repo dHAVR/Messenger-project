@@ -1,12 +1,14 @@
 package com.dar_hav_projects.messenger.ui.screens.home
 
 import android.util.Log
+import com.dar_hav_projects.messenger.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,11 +35,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.dar_hav_projects.messenger.domens.models.Message
 import com.dar_hav_projects.messenger.ui.small_composables.MessageCard
 import com.dar_hav_projects.messenger.ui.small_composables.TopAppBarWithBackAction
 import com.dar_hav_projects.messenger.encryption.Encryption
+import com.dar_hav_projects.messenger.ui.theme.Blue300
+import com.dar_hav_projects.messenger.ui.theme.Blue400
 import com.dar_hav_projects.messenger.utils.TimeProvider
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
 import com.dar_hav_projects.messenger.view_models.MessagesViewModel
@@ -51,6 +56,7 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
     val listState = rememberLazyListState()
 
     val coroutineScope = rememberCoroutineScope()
+
     val messages by messagesViewModel.messages.observeAsState(initial = emptyList())
 
     val messagesDB = messagesViewModel.messagesDB.collectAsState(initial = emptyList())
@@ -149,10 +155,13 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
                     placeholder = { Text("Type a message") },
                     colors = TextFieldDefaults.textFieldColors(
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color.Transparent,
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
-                IconButton(onClick = {
+                IconButton(
+                    modifier = Modifier.padding(end = 15.dp),
+                    onClick = {
 
                     coroutineScope.launch(Dispatchers.Default) {
 
@@ -182,7 +191,12 @@ fun ChatScreen(viewModel: ChatsViewModel, chatID: String, messagesViewModel: Mes
                     viewModel.messageText.value = ""
                 }
                 ) {
-                    Icon(Icons.Default.Send, contentDescription = "Send")
+                    Icon(
+                        modifier = Modifier.size(30.dp),
+                        painter = painterResource(id = R.drawable.ic_send),
+                        tint = Blue300,
+                        contentDescription = "Send"
+                    )
                 }
             }
         }

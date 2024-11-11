@@ -95,19 +95,32 @@ fun MessageCard(
             Text(
                 text = viewModel.decryptMessage(item.content) ?: "",
                 style = body1,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if(viewModel.checkSender(item.senderId)) {
+                    MaterialTheme.colorScheme.background
+                }else{
+                    MaterialTheme.colorScheme.onSurface
+
+                }
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = DateConvertor.formatDateTime(item.timestamp),
                 style = meta2,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if(viewModel.checkSender(item.senderId)) {
+                    MaterialTheme.colorScheme.background
+                }else{
+                    MaterialTheme.colorScheme.onSurface
+
+                }
             )
         }
     }
 
     Box{
         DropdownMenu(
+            modifier = Modifier
+                .padding(end = 15.dp)
+                .background(MaterialTheme.colorScheme.background),
             expanded = expanded,
             onDismissRequest = {
                 expanded = false

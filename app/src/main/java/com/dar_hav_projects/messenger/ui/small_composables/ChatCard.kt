@@ -82,7 +82,7 @@ fun ChatCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(50.dp)
                     .background(MaterialTheme.colorScheme.surface, shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -91,7 +91,7 @@ fun ChatCard(
                     contentDescription = "Chat Icon",
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(30.dp)
                         .padding(5.dp)
                 )
             }

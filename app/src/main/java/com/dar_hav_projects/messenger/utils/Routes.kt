@@ -11,7 +11,7 @@ sealed class Routes(val name: String) {
 
     data object ContactsList : Routes("contacts_list")
     data object ChatsList : Routes("chats_list")
-    data object Settings : Routes("settings")
+    data object Account : Routes("account")
     data object Chat: Routes("chat")
     data object SearchContact : Routes("contact_search")
 }

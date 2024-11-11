@@ -109,8 +109,10 @@ fun ContactCard(
             }
         Box{
             DropdownMenu(
+                modifier = Modifier
+                    .padding(end = 15.dp),
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onDismissRequest = { expanded = false },
             ) {
                 DropdownMenuItem(onClick = {
                     onDelete(item.userId)
