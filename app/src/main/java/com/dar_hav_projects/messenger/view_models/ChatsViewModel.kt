@@ -26,6 +26,11 @@ class ChatsViewModel (
     lateinit var networkActions: I_NetworkActions
 
 
+    init {
+        appComponent.inject(this)
+    }
+
+
     private var _chats = MutableLiveData<List<Chat>>()
     val chats: LiveData<List<Chat>> = _chats
 
@@ -69,9 +74,6 @@ class ChatsViewModel (
         }
     }
 
-    init {
-        appComponent.inject(this)
-    }
 
 
 

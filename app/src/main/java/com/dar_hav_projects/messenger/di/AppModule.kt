@@ -3,6 +3,7 @@ package com.dar_hav_projects.messenger.di
 import com.dar_hav_projects.messenger.MainActivity
 import com.dar_hav_projects.messenger.domens.actions.FirebaseRepository
 import com.dar_hav_projects.messenger.encryption.Encryption
+import com.dar_hav_projects.messenger.view_models.AccountViewModel
 import com.dar_hav_projects.messenger.view_models.ChatsViewModel
 import com.dar_hav_projects.messenger.view_models.ContactsViewModel
 import com.dar_hav_projects.messenger.view_models.MessagesViewModel
@@ -20,6 +21,7 @@ import javax.inject.Singleton
 interface AppComponent {
     fun inject(signViewModel: SignViewModel)
     fun inject(chatsViewModel: ChatsViewModel)
+    fun inject(accountViewModel: AccountViewModel)
     fun inject(encryptionModule: Encryption)
     fun inject(messagesViewModel: MessagesViewModel)
     fun inject(contactsViewModel: ContactsViewModel)
